@@ -62,9 +62,7 @@ class UserManagementPage {
 
     const config = {
       imap: {
-        ...gmxConfig, 
-        user: 'Seyfullah.kilinc@gmx.de',
-        password: 'Seyf@123..',
+        ...gmxConfig.imap,  
         host: 'imap.gmx.com',
         port: 993,
         tls: true,
