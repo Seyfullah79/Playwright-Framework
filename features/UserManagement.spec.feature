@@ -14,7 +14,7 @@ Feature: User Registration, Email Confirmation, and Account Deletion
     Then I should see a success message
     And I should return to the login page
     When I verify the email and set the password for "<email_key>" from "<dataFile>"
-    When I delete the account using "<email_key>" from file "<dataFile>"
+    Then I delete the account using "<email_key>" from file "<dataFile>"
     Examples:
       | dataFile               | userKey  | email_key |
       | UserManagement_td.json | new_user | gmxIMAP   |
