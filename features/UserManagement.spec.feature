@@ -13,13 +13,12 @@ Feature: User Registration, Email Confirmation, and Account Deletion
     When I create a user from "<dataFile>" using key "<userKey>"
     Then I should see a success message
     And I should return to the login page
-    When I fetch and process the email using "<email_key>" from file "<dataFile>"
-    And I fill the password "<email_key>" from file "<dataFile>"
+    When I verify the email and set the password for "<email_key>" from "<dataFile>"
     When I delete the account using "<email_key>" from file "<dataFile>"
     Examples:
       | dataFile               | userKey  | email_key |
-      | BundIDRegister_td.json | new_user | gmxIMAP   |
       | UserManagement_td.json | new_user | gmxIMAP   |
+      | BundIDRegister_td.json | new_user | gmxIMAP   |
 
 
 

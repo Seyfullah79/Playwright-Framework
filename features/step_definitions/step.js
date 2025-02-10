@@ -77,7 +77,37 @@ Then('I should return to the login page', { timeout: 50000 }, async function () 
     await expect(this.page).toHaveURL('https://test.xn--frderung-n4a.nrw/onlineantrag#login');
 });
 
-Then('I fill the password {string} from file {string}', async function (emailKey, fileName) {
+When('I create a user from {string} using key {string}', async function (dataFile, userKey) {
+    try {
+        // ✅ Adjust path to point to the correct folder (Utils/)
+        const filePath = path.resolve(__dirname, '../../Utils', dataFile);
+        console.log(`📂 Resolving JSON File Path: ${filePath}`);
+
+        // ✅ Check if file exists before reading
+        if (!fs.existsSync(filePath)) {
+            throw new Error(`🚨 File not found: ${filePath}`);
+        }
+
+        // ✅ Read and parse JSON file
+        let testData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+        // ✅ Extract user data dynamically
+        const user = testData[userKey];
+
+        if (!user) {
+            throw new Error(`🚨 Key "${userKey}" not found in ${dataFile}`);
+        }
+
+        console.log(`📧 Registering user: ${user.first_name} ${user.last_name} (${user.email})`);
+
+        await this.poManager.userManagementPage.createUser(user.first_name, user.last_name, user.email);
+    } catch (error) {
+        console.error(`❌ Error: ${error.message}`);
+        throw error;
+    }
+});
+
+When('I verify the email and set the password for {string} from {string}', { timeout: 50000 }, async function (emailKey, fileName) {
     try {
         const filePath = path.resolve(__dirname, `../../Utils/${fileName}`);
         console.log(`📂 Resolving JSON File Path: ${filePath}`);
@@ -88,15 +118,30 @@ Then('I fill the password {string} from file {string}', async function (emailKey
 
         const testData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
-        if (!testData[emailKey] || !testData[emailKey].password) {
-            throw new Error(`🚨 Key "${emailKey}" not found in ${filePath} or missing password`);
+        if (!testData[emailKey] || !testData[emailKey].user || !testData[emailKey].password) {
+            throw new Error(`🚨 Key "${emailKey}" not found in ${filePath} or missing user/password`);
         }
+
+        const gmxConfig = {
+            imap: {
+                host: 'imap.gmx.com',
+                port: 993,
+                tls: true,
+                authTimeout: 5000,
+                user: testData[emailKey].user,
+                password: testData[emailKey].password
+            }
+        };
+
+        console.log(`📩 Fetching email for: ${gmxConfig.imap.user}`);
+
+        await this.poManager.userManagementPage.fetchAndProcessEmail(gmxConfig);
 
         const password = testData[emailKey].password;
         console.log(`🔑 Using password: ${password} to submit form`);
 
         await this.poManager.userManagementPage.fillPasswordAndSubmit(password);
-
+        
     } catch (error) {
         console.error(`❌ Error: ${error.message}`);
         throw error;
@@ -129,70 +174,8 @@ When('I delete the account using {string} from file {string}', { timeout: 50000 
     }
 });
 
-When('I create a user from {string} using key {string}', async function (dataFile, userKey) {
-    try {
-        // ✅ Adjust path to point to the correct folder (Utils/)
-        const filePath = path.resolve(__dirname, '../../Utils', dataFile);
-        console.log(`📂 Resolving JSON File Path: ${filePath}`);
-
-        // ✅ Check if file exists before reading
-        if (!fs.existsSync(filePath)) {
-            throw new Error(`🚨 File not found: ${filePath}`);
-        }
-
-        // ✅ Read and parse JSON file
-        let testData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
-        // ✅ Extract user data dynamically
-        const user = testData[userKey];
-
-        if (!user) {
-            throw new Error(`🚨 Key "${userKey}" not found in ${dataFile}`);
-        }
-
-        console.log(`📧 Registering user: ${user.first_name} ${user.last_name} (${user.email})`);
-
-        await this.poManager.userManagementPage.createUser(user.first_name, user.last_name, user.email);
-    } catch (error) {
-        console.error(`❌ Error: ${error.message}`);
-        throw error;
-    }
-});
 
 
-When('I fetch and process the email using {string} from file {string}', { timeout: 50000 }, async function (emailKey, fileName) {
-    try {
-        const filePath = path.resolve(__dirname, `../../Utils/${fileName}`);
-        console.log(`📂 Resolving JSON File Path: ${filePath}`);
 
-        if (!fs.existsSync(filePath)) {
-            throw new Error(`🚨 File not found: ${filePath}`);
-        }
 
-        const testData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
-        if (!testData[emailKey] || !testData[emailKey].user || !testData[emailKey].password) {
-            throw new Error(`🚨 Key "${emailKey}" not found in ${filePath} or missing user/password`);
-        }
-
-        const gmxConfig = {
-            imap: {
-                host: 'imap.gmx.com',
-                port: 993,
-                tls: true,
-                authTimeout: 5000,
-                user: testData[emailKey].user,
-                password: testData[emailKey].password
-            }
-        };
-
-        console.log(`📩 Fetching email for: ${gmxConfig.imap.user}`);
-
-        await this.poManager.userManagementPage.fetchAndProcessEmail(gmxConfig);
-        
-    } catch (error) {
-        console.error(`❌ Error: ${error.message}`);
-        throw error;
-    }
-});
 
