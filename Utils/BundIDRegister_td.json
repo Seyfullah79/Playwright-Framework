@@ -1,0 +1,13 @@
+{
+    "new_user": {
+        "email": "testITNRW@gmx.de",
+        "first_name": "Seyfullah",
+        "last_name": "Kilinc",
+        "password": "test@123.."
+    },
+
+    "gmxIMAP": {
+        "user": "testITNRW@gmx.de",
+        "password": "test@123.."
+    }
+}  

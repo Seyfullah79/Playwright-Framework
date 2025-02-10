@@ -1,0 +1,35 @@
+{
+  "name": "it_nrw",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+"scripts": {
+  "CucumberSmoke": "npx cucumber-js features --require features/step_definitions/step.js --tags \"@smoke\" --format html:cucumber-report.html --retry 2 && start cucumber-report.html",
+  "CucumberRegression": "npx cucumber-js features --require features/step_definitions/step.js --tags \"@regression\" --format html:cucumber-report.html --retry 0 && start cucumber-report.html",
+  "CucumberAll": "npx cucumber-js features --require features/step_definitions/step.js --format html:cucumber-report.html --retry 2 && start cucumber-report.html",
+  "CucumberSingle": "npx cucumber-js features/UserManagement.spec.feature --format html:cucumber-report.html && start cucumber-report.html",
+  "regressionMock": "npx playwright test --grep @regression && start playwright-report/index.html",
+  "smokeMock": "npx playwright test --grep @smoke && start playwright-report/index.html",
+  "allTestMock": "npx playwright test && start playwright-report/index.html",
+  "singleMock": "npx playwright test BundIDRegister.spec.js && start playwright-report/index.html"
+},
+
+  "license": "ISC",
+  "type": "commonjs",
+  "description": "",
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.2.0",
+    "@cucumber/pretty-formatter": "^1.0.1",
+    "cucumber-html-reporter": "^7.2.0"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.49.1",
+    "cheerio": "^1.0.0",
+    "imap-simple": "^1.6.3",
+    "mailparser": "^3.7.2",
+    "node-fetch": "^3.3.2",
+    "node-imap": "^0.9.6",
+    "quoted-printable": "^1.0.1"
+  }
+}
