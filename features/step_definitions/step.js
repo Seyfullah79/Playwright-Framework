@@ -1,140 +1,177 @@
+// Importing required modules from Cucumber and Playwright
 const { Given, When, Then, Before, After } = require('@cucumber/cucumber');
 const { expect, chromium } = require('@playwright/test');
 const { POManager } = require('../../pageobjects/POManager');
 const dataset = require('../../Utils/FormCreationAndManagement_td.json');
-const datasetUserManagement = require('../../Utils/UserManagement_td.json');
-const fs = require('fs');  
-const path = require('path');  
+const fs = require('fs');
+const path = require('path');
 
+// Define page navigation map for dynamic page handling
+const pageNavigationMap = {
+    "My Applications": (poManager) => poManager.myApplicationsPage.navigateToMyApplications(),
+};
 
-// Close the browser after each scenario
-After(async function () {
-    if (this.browser) {
-        await this.browser.close();
+// ✅ Before Hook: Launch the browser before each scenario
+Before(async function () {
+    if (!this.browser) {
+        this.browser = await chromium.launch({ headless: false });
+        console.log("🚀 Browser instance created.");
     }
-});
-
-
-function getUrlFromJson(urlKey) {
-    try {
-        const filePath = path.resolve(__dirname, '../../Utils/loginPages_td.json');
-        console.log(`🔍 Trying to read file from: ${filePath}`);
-
-        if (!fs.existsSync(filePath)) {
-            throw new Error(`🚨 File not found: ${filePath}`);
-        }
-
-        const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        return jsonData[urlKey] || null;
-    } catch (error) {
-        console.error(`❌ Error reading loginPage_td.json:`, error);
-        return null;
-    }
-}
-
-
-Given('I launch the browser and navigate the {string}',{ timeout: 50000 }, async function (urlKey) {
-    this.browser = await chromium.launch({ headless: false });
     const context = await this.browser.newContext();
     this.page = await context.newPage();
     this.poManager = new POManager(this.page);
+    console.log("🌍 New browser context and page initialized.");
+});
 
-    // Fetch URL from loginPage.json using the provided key
+// ✅ After Hook: Close the browser after each scenario
+After(async function () {
+    if (this.browser) {
+        await this.browser.close();
+        console.log("❌ Browser closed after scenario execution.");
+    }
+});
+
+// ✅ Function to retrieve URL from JSON file
+function getUrlFromJson(urlKey) {
+    try {
+        const filePath = path.resolve(__dirname, '../../Utils/loginPages_td.json');
+        console.log(`🔍 Fetching URL from: ${filePath}`);
+
+        if (!fs.existsSync(filePath)) {
+            throw new Error(`🚨 JSON file not found: ${filePath}`);
+        }
+
+        const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+
+        if (!jsonData[urlKey]) {
+            throw new Error(`❌ URL key "${urlKey}" not found in loginPages_td.json`);
+        }
+
+        console.log(`✅ Found URL: ${jsonData[urlKey]}`);
+        return jsonData[urlKey];
+    } catch (error) {
+        console.error(`❌ Error retrieving URL: ${error.message}`);
+        throw error;
+    }
+}
+
+// ✅ Navigate to a specific URL based on the provided key
+Given('I navigate to {string}', { timeout: 50000 }, async function (urlKey) {
     const finalUrl = getUrlFromJson(urlKey);
     
     if (!finalUrl) {
-        throw new Error(`❌ URL not found in loginPage.json under key "${urlKey}"`);
+        throw new Error(`❌ URL not found in loginPages_td.json under key "${urlKey}"`);
     }
 
-    console.log(`🚀 Navigating to: ${finalUrl}`);
+    console.log(`🌍 Navigating to: ${finalUrl}`);
     await this.page.goto(finalUrl);
 });
 
+// ✅ Log in as a tester
 When('I am logged in as a tester', { timeout: 50000 }, async function () {
+    console.log("🔑 Logging in as a tester...");
     await this.poManager.loginPage.navigateTesterLoginPage();
     await this.poManager.loginPage.validTesterLogin(dataset.user_email, dataset.password);
+    console.log("✅ Tester login successful.");
 });
 
-When('I fill out the form and save progress', { timeout: 50000 }, async function () {
+// ✅ Fill out the form and save it
+When('I fill out the form and save it', { timeout: 50000 }, async function () {
+    console.log("📝 Filling out the form...");
     await this.poManager.loginPage.createContractButton.click();
     await this.poManager.loginPage.interactWithYearButtons();
     await this.poManager.loginPage.createSelectedContract.first().click();
     await this.poManager.formToFillOut.fillForm();
     await this.poManager.formToFillOut.saveProgress();
+    console.log("✅ Form saved successfully.");
 });
 
-When('I navigate to My Applications page', { timeout: 50000 }, async function () {
-    await this.poManager.myApplicationsPage.navigateToMyApplications();
-
+// ✅ Navigate to a dynamic page
+When('I navigate to the {string} page', { timeout: 50000 }, async function (pageName) {
+    if (pageNavigationMap[pageName]) {
+        console.log(`🌍 Navigating to page: ${pageName}`);
+        await pageNavigationMap[pageName](this.poManager);
+    } else {
+        throw new Error(`❌ Page navigation for "${pageName}" is not implemented.`);
+    }
 });
 
+// ✅ Verify the saved form appears
 Then('I should see the saved form', { timeout: 50000 }, async function () {
+    console.log("🔍 Checking for saved form...");
     await this.poManager.myApplicationsPage.checkSavedForm();
+    console.log("✅ Saved form is visible.");
 });
 
-Then('I should delete the saved form', { timeout: 50000 }, async function () {
+// ✅ Delete the saved form
+Then('I should be able to delete the saved form', { timeout: 50000 }, async function () {
+    console.log("🗑️ Deleting saved form...");
     await this.poManager.myApplicationsPage.filterFormAndDeleteConract();
+    console.log("✅ Saved form deleted.");
 });
 
-// steps for User Management
-When('I navigate to the user registration page', { timeout: 50000 }, async function () {
+// ✅ Start user registration process
+When('I start the user registration process', { timeout: 50000 }, async function () {
+    console.log("🚀 Navigating to user registration page...");
     await this.poManager.loginPage.navigateTesterLoginPage();
     await this.poManager.userManagementPage.navigateToUserRegisterPage();
 });
 
-Then('I should see the user registration page', { timeout: 50000 }, async function () {
+// ✅ Verify user registration page URL
+Then('I should see the registration page', { timeout: 50000 }, async function () {
+    console.log("🔍 Checking if registration page is loaded...");
     await expect(this.page).toHaveURL('https://test.xn--frderung-n4a.nrw/onlineantrag#registrierung');
+    console.log("✅ Registration page verified.");
 });
 
-When('I create a user with name {string}, lastname {string} and email {string}', { timeout: 50000 }, async function (firstName, lastName, email) {
-    await this.poManager.userManagementPage.createUser(firstName, lastName, email); // Use page object
-});
+// ✅ Create user dynamically from JSON
+function getTestData(fileName) {
+    const filePath = path.resolve(__dirname, `../../Utils/${fileName}`);
+    
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`🚨 JSON file not found: ${filePath}`);
+    }
 
-When('I create a user with fallowing information {string} , {string} and {string}', async function (firstName, lastName, email) {
-    await this.poManager.userManagementPage.createUser(firstName, lastName, email);
-});
+    console.log(`📂 Reading test data from: ${filePath}`);
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
 
-
-Then('I should see a success message', { timeout: 50000 }, async function () {
-    await this.poManager.userManagementPage.verifyRegistrationSuccess();
-});
-
-Then('I should return to the login page', { timeout: 50000 }, async function () {
-    await this.poManager.userManagementPage.ReturnToLoginPage();
-    await expect(this.page).toHaveURL('https://test.xn--frderung-n4a.nrw/onlineantrag#login');
-});
-
-When('I create a user from {string} using key {string}', async function (dataFile, userKey) {
+// ✅ Register a new user dynamically
+When('I create a new user using {string} with key {string}', async function (dataFile, userKey) {
     try {
-        // ✅ Adjust path to point to the correct folder (Utils/)
-        const filePath = path.resolve(__dirname, '../../Utils', dataFile);
-        console.log(`📂 Resolving JSON File Path: ${filePath}`);
-
-        // ✅ Check if file exists before reading
-        if (!fs.existsSync(filePath)) {
-            throw new Error(`🚨 File not found: ${filePath}`);
-        }
-
-        // ✅ Read and parse JSON file
-        let testData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
-        // ✅ Extract user data dynamically
+        const testData = getTestData(dataFile);
         const user = testData[userKey];
 
         if (!user) {
-            throw new Error(`🚨 Key "${userKey}" not found in ${dataFile}`);
+            throw new Error(`🚨 User key "${userKey}" not found in ${dataFile}`);
         }
 
         console.log(`📧 Registering user: ${user.first_name} ${user.last_name} (${user.email})`);
-
         await this.poManager.userManagementPage.createUser(user.first_name, user.last_name, user.email);
+        console.log("✅ User registration completed.");
     } catch (error) {
         console.error(`❌ Error: ${error.message}`);
         throw error;
     }
 });
 
-When('I verify the email and set the password for {string} from {string}', { timeout: 50000 }, async function (emailKey, fileName) {
+// ✅ Verify that user sees a success message after registration
+Then('I should see a success message', { timeout: 50000 }, async function () {
+    console.log("🔍 Checking for success message...");
+    await this.poManager.userManagementPage.verifyRegistrationSuccess();
+    console.log("✅ Success message verified.");
+});
+
+// ✅ Verify user is redirected to the login page
+Then('I should be redirected to the login page', { timeout: 50000 }, async function () {
+    console.log("🔄 Redirecting to login page...");
+    await this.poManager.userManagementPage.ReturnToLoginPage();
+    await expect(this.page).toHaveURL('https://test.xn--frderung-n4a.nrw/onlineantrag#login');
+    console.log("✅ Successfully redirected to the login page.");
+});
+
+// ✅ Verify email and set a password
+When('I verify the email and set the password for {string} using {string}', { timeout: 50000 }, async function (emailKey, fileName) {
     try {
         const filePath = path.resolve(__dirname, `../../Utils/${fileName}`);
         console.log(`📂 Resolving JSON File Path: ${filePath}`);
@@ -175,34 +212,21 @@ When('I verify the email and set the password for {string} from {string}', { tim
     }
 });
 
-When('I delete the account using {string} from file {string}', { timeout: 50000 }, async function (emailKey, fileName) {
+// ✅ Delete the user account
+When('I delete the account linked to {string} in {string}', { timeout: 50000 }, async function (emailKey, fileName) {
     try {
-        const filePath = path.resolve(__dirname, `../../Utils/${fileName}`);
-        console.log(`📂 Resolving JSON File Path: ${filePath}`);
+        const testData = getTestData(fileName);
+        const emailData = testData[emailKey];
 
-        if (!fs.existsSync(filePath)) {
-            throw new Error(`🚨 File not found: ${filePath}`);
+        if (!emailData || !emailData.password) {
+            throw new Error(`🚨 Email key "${emailKey}" not found in ${fileName}`);
         }
 
-        const testData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
-        if (!testData[emailKey] || !testData[emailKey].password) {
-            throw new Error(`🚨 Key "${emailKey}" not found in ${filePath} or missing password`);
-        }
-
-        const password = testData[emailKey].password;
-        console.log(`🗑️ Deleting account using password: ${password}`);
-
-        await this.poManager.userManagementPage.deleteAccount(password);
-
+        console.log(`🗑️ Deleting account for: ${emailData.user}`);
+        await this.poManager.userManagementPage.deleteAccount(emailData.password);
+        console.log("✅ Account deletion successful.");
     } catch (error) {
         console.error(`❌ Error: ${error.message}`);
         throw error;
     }
 });
-
-
-
-
-
-
