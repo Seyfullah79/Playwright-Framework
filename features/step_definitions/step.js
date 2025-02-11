@@ -14,13 +14,40 @@ After(async function () {
     }
 });
 
-// steps for Form Creation and management
-Given('I launch the browser and navigate to the login page', { timeout: 50000 }, async function () {
+
+function getUrlFromJson(urlKey) {
+    try {
+        const filePath = path.resolve(__dirname, '../../Utils/loginPages_td.json');
+        console.log(`🔍 Trying to read file from: ${filePath}`);
+
+        if (!fs.existsSync(filePath)) {
+            throw new Error(`🚨 File not found: ${filePath}`);
+        }
+
+        const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        return jsonData[urlKey] || null;
+    } catch (error) {
+        console.error(`❌ Error reading loginPage_td.json:`, error);
+        return null;
+    }
+}
+
+
+Given('I launch the browser and navigate the {string}',{ timeout: 50000 }, async function (urlKey) {
     this.browser = await chromium.launch({ headless: false });
     const context = await this.browser.newContext();
     this.page = await context.newPage();
     this.poManager = new POManager(this.page);
-    await this.poManager.loginPage.navigateURL();
+
+    // Fetch URL from loginPage.json using the provided key
+    const finalUrl = getUrlFromJson(urlKey);
+    
+    if (!finalUrl) {
+        throw new Error(`❌ URL not found in loginPage.json under key "${urlKey}"`);
+    }
+
+    console.log(`🚀 Navigating to: ${finalUrl}`);
+    await this.page.goto(finalUrl);
 });
 
 When('I am logged in as a tester', { timeout: 50000 }, async function () {
