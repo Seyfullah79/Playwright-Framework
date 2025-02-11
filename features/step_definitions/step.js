@@ -173,19 +173,25 @@ Then('I should be redirected to the login page', { timeout: 50000 }, async funct
 // ✅ Verify email and set a password
 When('I verify the email and set the password for {string} using {string}', { timeout: 50000 }, async function (emailKey, fileName) {
     try {
+        // Resolve the JSON file path
         const filePath = path.resolve(__dirname, `../../Utils/${fileName}`);
         console.log(`📂 Resolving JSON File Path: ${filePath}`);
 
+        // Check if the JSON file exists
         if (!fs.existsSync(filePath)) {
             throw new Error(`🚨 File not found: ${filePath}`);
         }
 
+        // Read and parse JSON file
         const testData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        console.log(`📜 Extracted JSON Data:`, testData[emailKey] || "❌ Key not found!");
 
+        // Validate that required fields exist in JSON
         if (!testData[emailKey] || !testData[emailKey].user || !testData[emailKey].password) {
             throw new Error(`🚨 Key "${emailKey}" not found in ${filePath} or missing user/password`);
         }
 
+        // Store IMAP credentials
         const gmxConfig = {
             imap: {
                 host: 'imap.gmx.com',
@@ -197,17 +203,29 @@ When('I verify the email and set the password for {string} using {string}', { ti
             }
         };
 
-        console.log(`📩 Fetching email for: ${gmxConfig.imap.user}`);
+        // Debugging IMAP User & Password
+        console.log(`📩 Attempting to fetch email for user: ${gmxConfig.imap.user}`);
+        console.log(`🔑 IMAP Password (masked for security): ${gmxConfig.imap.password.replace(/./g, '*')}`);
 
-        await this.poManager.userManagementPage.fetchAndProcessEmail(gmxConfig);
+        // Verify email using IMAP
+        try {
+            await this.poManager.userManagementPage.fetchAndProcessEmail(gmxConfig);
+            console.log(`📨 Email processing completed for: ${gmxConfig.imap.user}`);
+        } catch (imapError) {
+            console.error(`❌ IMAP Email Fetching Error: ${imapError.message}`);
+            throw new Error(`IMAP email processing failed: ${imapError.message}`);
+        }
 
+        // Extract password from JSON
         const password = testData[emailKey].password;
-        console.log(`🔑 Using password: ${password} to submit form`);
+        console.log(`🔑 Using password (masked): ${password.replace(/./g, '*')} to submit form`);
 
+        // Submit password and complete verification
         await this.poManager.userManagementPage.fillPasswordAndSubmit(password);
-        
+        console.log("✅ Password submission completed successfully.");
+
     } catch (error) {
-        console.error(`❌ Error: ${error.message}`);
+        console.error(`❌ Error in email verification process: ${error.message}`);
         throw error;
     }
 });
