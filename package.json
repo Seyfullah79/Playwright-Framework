@@ -5,9 +5,9 @@
   "keywords": [],
   "author": "",
 "scripts": {
-  "CucumberSmoke": "npx cucumber-js features --require features/step_definitions/step.js --tags \"@smoke\" --format html:cucumber-report.html --retry 0 && start cucumber-report.html",
-  "CucumberRegression": "npx cucumber-js features --require features/step_definitions/step.js --tags \"@regression\" --format html:cucumber-report.html --retry 0 && start cucumber-report.html",
-  "CucumberAll": "npx cucumber-js features --require features/step_definitions/step.js --format html:cucumber-report.html --retry 0 && start cucumber-report.html",
+  "CucumberSmoke": "npx cucumber-js features --require features/step_definitions/**/*.js --tags \"@smoke\" --format html:report/cucumber-smoke-report.html --retry 0 && start report/cucumber-smoke-report.html",
+  "CucumberRegression": "npx cucumber-js features --require features/step_definitions/**/*.js --tags \"@regression\" --format html:report/cucumber-regression-report.html --retry 0 && start report/cucumber-regression-report.html",
+  "CucumberAll": "npx cucumber-js features --require features/step_definitions/step.js --format html:report/cucumber-all-report.html --retry 0 && start cucumber-all-report.html",
   "CucumberSingle": "npx cucumber-js features/UserManagement.spec.feature --format html:cucumber-report.html && start cucumber-report.html",
   "regressionMock": "npx playwright test --grep @regression && start playwright-report/index.html",
   "smokeMock": "npx playwright test --grep @smoke && start playwright-report/index.html",
