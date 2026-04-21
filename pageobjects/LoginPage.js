@@ -7,13 +7,13 @@ class LoginPage {
 
         this.emailInput = page.locator('[type="text"]');
         this.passwordInput = page.locator('[type="password"]');
-        this.loginButton = page.locator("#button-1120-btnInnerEl");
-        this.loginLink = page.locator("#container-1061-innerCt a");
+        this.loginButton = page.locator("#button-1106-btnInnerEl");
+        this.loginLink = page.locator("div[id='container-1060-innerCt'] a[class='login-panel-hyperlink']");
         this.createContractButton = page.getByRole("button", {name: "Neuen Antrag stellen", state: "visible"});
-        this.createSelectedContract = page.locator('.x-btn.green_btn[role="button"]');
+        this.createSelectedContract = page.locator('#button-5379');
         this.projectText = page.locator('h1:has-text("Mittel für Ihre Projekte")');
         this.heading = page.locator('h1:has-text("Anmeldung")');
-        this.CocpitPageText = page.locator("#panel-1025-innerCt span");
+        this.CocpitPageText = page.locator("//h1[normalize-space()='Intro']");
         this.UsernameInfoText = page.locator("(//div[contains(@class, 'x-autocontainer-innerCt') and contains(., 'Willkommen')])[1]");
     }
 
@@ -49,6 +49,7 @@ class LoginPage {
     async navigateContract() {
         await this.createContractButton.click();
         await this.interactWithYearButtons();
+        debugger;   
         await this.createSelectedContract.first().click();
     }
 
